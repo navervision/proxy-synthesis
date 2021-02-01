@@ -1,6 +1,6 @@
 # Proxy Synthesis: Learning with Synthetic Classes for Deep Metric Learning
 
-Official PyTorch implementation of *Proxy Synthesis: Learning with Synthetic Classes for Deep Metric Learning* (AAAI 2021)
+Official PyTorch implementation of *"Proxy Synthesis: Learning with Synthetic Classes for Deep Metric Learning"* (AAAI 2021)
 
 **Geonmo Gu\*<sup>1</sup>, Byungsoo Ko\*<sup>1</sup>, Han-Gyu Kim<sup>2</sup>** (* Authors contributed equally.)
 
