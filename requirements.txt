@@ -1,0 +1,5 @@
+tensorboard
+numpy
+tqdm
+scikit-learn
+argparse
