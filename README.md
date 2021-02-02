@@ -12,7 +12,7 @@ Official PyTorch implementation of *"Proxy Synthesis: Learning with Synthetic Cl
 
 ### Proxy Synthesis
 
-- *Proxy Synthesis (PS)* is a novel regularizer for any softmax variants and proxy-based losses in deep metric learning.
+- *Proxy Synthesis (PS)* is a novel regularizer for any softmax variants and proxy-based losses in deep metric learning. 
 
 <img src="figures/overview.png">
 
