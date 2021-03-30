@@ -6,7 +6,7 @@ Official PyTorch implementation of *"Proxy Synthesis: Learning with Synthetic Cl
 
 <sup>1</sup>@NAVER/LINE Vision, <sup>2</sup>@NAVER Clova Speech
 
-- Paper(TBD) | Presentation Video(TBD) | PPT(TBD) | Poster(TBD)
+- [Paper](https://arxiv.org/abs/2103.15454) | [Presentation Video](https://www.youtube.com/watch?v=v_KYo2Crbig) | [PPT](https://www.slideshare.net/ByungSooKo1/aaai2021-proxy-synthesis-learning-with-synthetic-classes-for-deep-metric-learning) | [Poster](https://www.slideshare.net/ByungSooKo1/aaai2021-proxy-synthesis-learning-with-synthetic-classes-for-deep-metric-learning-poster)
 
 ## Overview
 
