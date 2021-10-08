@@ -69,7 +69,7 @@ $ pip install -r requirements.txt
 - Download [CARS196](https://ai.stanford.edu/~jkrause/cars/car_dataset.html) dataset and unzip
 
 ```bash
-$ wget http://imagenet.stanford.edu/internal/car196/car_ims.tgz
+$ wget http://ai.stanford.edu/~jkrause/car196/cars_annos.mat
 $ tar zxvf car_ims.tgz -C ./dataset
 ```
 
