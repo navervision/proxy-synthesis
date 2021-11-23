@@ -6,7 +6,7 @@ Apache License v2.0
 import os
 import shutil
 
-base_path = 'dataset'
+base_path = './cars'
 trainPrefix = os.path.join(base_path, 'carDB/train/')
 testPrefix = os.path.join(base_path, 'carDB/test/')
 for lines in open(os.path.join(base_path, 'cars_annos.txt')):
@@ -25,7 +25,7 @@ for lines in open(os.path.join(base_path, 'cars_annos.txt')):
             os.makedirs(ddr)
         shutil.move(file_path, ddr + '/' + fname)
 
-try:
-    os.rmdir(os.path.join(base_path, 'car_ims'))
-except Exception as e:
-    print (e)
+#download the tar of all images combined from https://ai.stanford.edu/~jkrause/cars/car_dataset.html
+#download the txt file from the same link
+#all of the above inside cars folder
+# run this file from outside the cars folder
