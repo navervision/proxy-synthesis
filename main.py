@@ -182,7 +182,7 @@ def main():
     test_loader = torch.utils.data.DataLoader(
         test_image,
         batch_size=128, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
+        num_workers=args.workers, pin_memory=False)
 
     if args.data_name.lower() == 'inshop':
         image_info = np.array(test_image.imgs)
@@ -216,6 +216,8 @@ def main():
     elif args.loss.lower() == 'Proxy_NCA'.lower():
         criterion = loss.Proxy_NCA(args.dim, args.C, scale=args.scale,
                                    ps_mu=args.ps_mu, ps_alpha=args.ps_alpha).cuda()
+    elif args.loss.lower() == 'Proxy_Anchor'.lower():
+        criterion = loss.Proxy_Anchor(args.dim, args.C).cuda()
     else:
         raise ValueError("{} is not supported loss name".format(args.loss))
 
@@ -302,6 +304,7 @@ def main():
 
     for epoch in range(args.start_epoch, args.epochs):
         epoch += 1
+        torch.cuda.empty_cache()
         print('Training in Epoch[{}]'.format(epoch))
         adjust_learning_rate(optimizer, epoch, args)
 

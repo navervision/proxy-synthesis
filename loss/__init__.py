@@ -5,3 +5,4 @@ Apache License v2.0
 '''
 from .proxy_losses import Norm_SoftMax
 from .proxy_losses import Proxy_NCA
+from .proxy_losses import Proxy_Anchor

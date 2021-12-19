@@ -10,6 +10,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 from torch.nn.parameter import Parameter
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+import random
 
 def proxy_synthesis(input_l2, proxy_l2, target, ps_alpha, ps_mu):
     '''
@@ -100,5 +105,134 @@ class Proxy_NCA(nn.Module):
         dist_mat *= self.scale
         pos_target = F.one_hot(target, dist_mat.shape[1]).float()
         loss = torch.mean(torch.sum(-pos_target * F.log_softmax(-dist_mat, -1), -1))
+
+        return loss
+
+
+def binarize(T, nb_classes):
+    T = T.cpu().numpy()
+    import sklearn.preprocessing
+    T = sklearn.preprocessing.label_binarize(
+        T, classes = range(0, nb_classes)
+    )
+    T = torch.FloatTensor(T).cuda()
+    return T
+
+def l2_norm(input):
+    input_size = input.size()
+    buffer = torch.pow(input, 2)
+    normp = torch.sum(buffer, 1).add_(1e-12)
+    norm = torch.sqrt(normp)
+    _output = torch.div(input, norm.view(-1, 1).expand_as(input))
+    output = _output.view(input_size)
+    return output
+
+class Proxy_Anchor(torch.nn.Module):
+    def __init__(self, sz_embed, nb_classes, mrg = 0.1, alpha = 32, ps_mu=0.0, ps_alpha=0.0):
+        torch.nn.Module.__init__(self)
+        # Proxy Anchor Initialization
+        self.proxies = torch.nn.Parameter(torch.randn(nb_classes, sz_embed).cuda())
+        nn.init.kaiming_normal_(self.proxies, mode='fan_out')
+
+        self.nb_classes = nb_classes
+        self.sz_embed = sz_embed
+        self.mrg = mrg
+        self.alpha = alpha
+        self.ps_mu = ps_mu
+        self.ps_alpha = ps_alpha
+        
+    def forward(self, X, T):
+        P = self.proxies
+        input_l2 = l2_norm(X)
+        proxy_l2 = l2_norm(P)
+        if self.ps_mu > 0.0:
+            input_l2, proxy_l2, target = proxy_synthesis(input_l2, proxy_l2, T,
+                                                         self.ps_alpha, self.ps_mu)
+
+        cos = F.linear(input_l2, proxy_l2)  # Calcluate cosine similarity
+        P_one_hot = binarize(T = T, nb_classes = self.nb_classes)
+        N_one_hot = 1 - P_one_hot
+    
+        pos_exp = torch.exp(-self.alpha * (cos - self.mrg))
+        neg_exp = torch.exp(self.alpha * (cos + self.mrg))
+
+        with_pos_proxies = torch.nonzero(P_one_hot.sum(dim = 0) != 0).squeeze(dim = 1)   # The set of positive proxies of data in the batch
+        num_valid_proxies = len(with_pos_proxies)   # The number of positive proxies
+        
+        P_sim_sum = torch.where(P_one_hot == 1, pos_exp, torch.zeros_like(pos_exp)).sum(dim=0) 
+        N_sim_sum = torch.where(N_one_hot == 1, neg_exp, torch.zeros_like(neg_exp)).sum(dim=0)
+        
+        pos_term = torch.log(1 + P_sim_sum).sum() / num_valid_proxies
+        neg_term = torch.log(1 + N_sim_sum).sum() / self.nb_classes
+        loss = pos_term + neg_term
+        return loss
+
+       
+class Proxy_Anchor_Compare(torch.nn.Module):
+    def __init__(self, sz_embed, nb_classes, mrg = 0.1, alpha = 32, ps_mu=0.0, ps_alpha=0.0):
+        torch.nn.Module.__init__(self)
+        # Proxy Anchor Initialization
+        self.proxies = torch.nn.Parameter(torch.randn(nb_classes, sz_embed).cuda())
+        nn.init.kaiming_normal_(self.proxies, mode='fan_out')
+
+        self.nb_classes = nb_classes
+        self.sz_embed = sz_embed
+        self.mrg = mrg
+        self.alpha = alpha
+        self.ps_mu = ps_mu
+        self.ps_alpha = ps_alpha
+        
+    def forward(self, X, T):
+        P = self.proxies
+        input_l2 = l2_norm(X)
+        proxy_l2 = l2_norm(P)
+        if self.ps_mu > 0.0:
+            input_l2, proxy_l2, target = proxy_synthesis(input_l2, proxy_l2, T,
+                                                         self.ps_alpha, self.ps_mu)
+
+        cos = F.linear(input_l2, proxy_l2)  # Calcluate cosine similarity
+        P_one_hot = binarize(T = T, nb_classes = self.nb_classes)
+        N_one_hot = 1 - P_one_hot
+    
+        pos_exp = torch.exp(-self.alpha * (cos - self.mrg))
+        neg_exp = torch.exp(self.alpha * (cos + self.mrg))
+
+        with_pos_proxies = torch.nonzero(P_one_hot.sum(dim = 0) != 0).squeeze(dim = 1)   # The set of positive proxies of data in the batch
+        num_valid_proxies = len(with_pos_proxies)   # The number of positive proxies
+        
+        P_sim_sum = torch.where(P_one_hot == 1, pos_exp, torch.zeros_like(pos_exp)).sum(dim=0) 
+        N_sim_sum = torch.where(N_one_hot == 1, neg_exp, torch.zeros_like(neg_exp)).sum(dim=0)
+        
+        pos_term = torch.log(1 + P_sim_sum).sum() / num_valid_proxies
+        neg_term = torch.log(1 + N_sim_sum).sum() / self.nb_classes
+        loss = pos_term + neg_term
+
+        ####Centroid
+     
+        centroid = []
+        # proxy = []
+
+        for i in range(self.nb_classes):
+          
+            inputsFromSameClass = T == i
+            val = torch.mean(input_l2[inputsFromSameClass], dim=0)
+            if torch.all(torch.isnan(val)):
+                val = torch.zeros((512), device="cuda:0")
+            centroid.append(val) ##rows that map to same class
+            # proxy.append(torch.mean(proxy_l2[inputsFromSameClass])) ##as proxy of same class is same mean does not make a diff
+        
+        centroid = torch.stack(centroid)
+        # proxy = torch.stack(proxy)
+
+        # ###Centroid similarity
+        cosCentroids = F.linear(centroid, centroid)
+        cosProxy = F.linear(proxy_l2, proxy_l2)
+
+        ###Find the closest
+        cosCentroids = torch.argsort(cosCentroids, dim=1)
+        cosProxy = torch.argsort(cosProxy, dim=1)
+        # ###check
+        np.savetxt("cosCentroids.csv", cosCentroids.cpu().detach().numpy(), delimiter=",")
+        np.savetxt("cosProxy.csv", cosProxy.cpu().detach().numpy(), delimiter=",")
 
         return loss

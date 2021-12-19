@@ -149,7 +149,30 @@ $ python main.py --gpu=0 \
 --scale=12.0 --check_epoch=5 \
 --ps_alpha=0.40 --ps_mu=1.0
 ```
+#### Proxy-Anchor loss with CARS196
 
+```bash
+$ python main.py --gpu=0 \
+--save_path=./logs/CARS196_Proxy_Anchor \
+--data=./dataset/carDB --data_name=cars196 \
+--dim=512 --batch_size=128 --epochs=130 \
+--freeze_BN --loss=Proxy_Anchor \
+--decay_step=50 --decay_stop=50 --n_instance=1 \
+--scale=23.0 --check_epoch=5
+```
+
+#### PS + Proxy-Anchor loss with CARS196
+
+```bash
+$ python main.py --gpu=0 \
+--save_path=./logs/CARS196_PS_Proxy_Anchor \
+--data=./dataset/carDB --data_name=cars196 \
+--dim=512 --batch_size=128 --epochs=130 \
+--freeze_BN --loss=Proxy_Anchor \
+--decay_step=50 --decay_stop=50 --n_instance=1 \
+--scale=23.0 --check_epoch=5 \
+--ps_alpha=0.40 --ps_mu=1.0
+```
 ### Check Test Results
 ```
 $ tensorboard --logdir=logs --port=10000
